@@ -1,0 +1,32 @@
+pism:
+    workflow:
+        next_run_triggered_by: couple_out                                                                      
+        subjobs:                                                                                               
+            couple_in:                                                                                         
+                    nproc: 1                                                                                   
+                    run_before: prepcompute                                                                    
+                    script: coupling_awiesm2pism.functions                                                     
+                    script_dir: ${general.script_dir}/pism                                                     
+                    call_function: awiesm2pism
+                    env_preparation: env_pism.py
+                    run_only: first_run_in_chunk
+
+            couple_out:
+                    nproc: 1                                                                                   
+                    run_after: tidy
+                    script: coupling_pism2awiesm.functions                                                     
+                    script_dir: ${general.script_dir}/pism                                                     
+                    call_function: pism2awiesm                                                                 
+                    env_preparation: env_pism2awiesm.py                                                        
+                    run_only: last_run_in_chunk
+
+            postprocessing:                                                                                    
+                    nproc: 1                                                                                   
+                    #batch_or_shell: batch
+                    order_in_cluster: concurrent
+                    run_on_queue: ${computer.partitions.pp.name}
+                    run_after: couple_out
+                    script_dir: /home/a/a270124/scripts/
+                    submit_to_batch_system: True
+                    script: post_pism_archive.sh ${general.expid} ${general.chunk_start_date!syear} ${general.chunk_end_date!syear} ${general.nyear}
+                    run_only: last_run_in_chunk  
